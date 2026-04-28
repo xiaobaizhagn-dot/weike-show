@@ -92,6 +92,7 @@
         .btn-delete-card {
             width:28px; height:28px; border-radius:50%; border:none;
             background:#fef2f2; color:#ef4444; cursor:pointer; font-size:0.85rem;
+            display:none; /* 默认隐藏，管理模式下再显示 */
         }
         .featured-star { position:absolute; top:12px; right:12px; color:#f59e0b; }
         .modal-overlay {
@@ -120,18 +121,15 @@
             80% { opacity:1; }
             100% { opacity:0; transform:translateX(-50%) translateY(-10px); }
         }
-        .share-link-area {
-            display:flex; align-items:center; gap:10px;
-            background:#f8fafc; padding:12px 16px;
-            border-radius:50px; border:1px dashed var(--border);
-            margin-top:12px;
-        }
-        .share-link-area input { background:transparent; border:none; flex:1; outline:none; }
+        /* 管理模式下的额外按钮可见 */
+        .admin-only { display:none; }
+        .admin-mode .admin-only { display:inline-flex; }
+        .admin-mode .btn-delete-card { display:inline-flex; }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header-inner">
+        <div class="header-inner" id="headerInner">
             <div style="display:flex; align-items:center; gap:12px;">
                 <div class="logo-icon">📚</div>
                 <div class="logo-text">
@@ -142,9 +140,10 @@
             <div style="display:flex; gap:10px; align-items:center;">
                 <input type="text" id="searchInput" placeholder="搜索..." style="width:180px; padding:8px 16px; border-radius:50px; border:2px solid #e2e8f0; outline:none;" autocomplete="off">
                 <button class="btn" id="btnShareView">🔗 分享当前视图</button>
-                <button class="btn" id="btnAdminToggle">⚙️ 管理</button>
-                <button class="btn btn-primary" id="btnAddCase" style="display:none;">＋ 添加案例</button>
-                <button class="btn" id="btnManageMeta" style="display:none;">📋 管理科目/类型</button>
+                <!-- 管理按钮组，默认隐藏，只有验证后显示 -->
+                <button class="btn admin-only" id="btnAdminToggle" style="display:none;">⚙️ 管理模式</button>
+                <button class="btn btn-primary admin-only" id="btnAddCase" style="display:none;">＋ 添加案例</button>
+                <button class="btn admin-only" id="btnManageMeta" style="display:none;">📋 管理科目/类型</button>
             </div>
         </div>
     </header>
@@ -159,7 +158,7 @@
     <div class="modal-overlay" id="detailModalOverlay" style="display:none;">
         <div class="modal"><button class="close-btn" id="btnCloseDetail">✕</button><div id="detailContent"></div></div>
     </div>
-    <!-- 添加案例弹窗 -->
+    <!-- 添加案例弹窗（仅管理模式可用） -->
     <div class="modal-overlay" id="addModalOverlay" style="display:none;">
         <div class="modal">
             <button class="close-btn" id="btnCloseAdd">✕</button>
@@ -186,14 +185,14 @@
             </form>
         </div>
     </div>
-    <!-- 密码弹窗 -->
+    <!-- 密码弹窗（仅管理员通过 ?admin 触发） -->
     <div class="modal-overlay" id="passwordModalOverlay" style="display:none;">
         <div class="modal" style="max-width:400px; text-align:center;">
             <button class="close-btn" id="btnClosePassword">✕</button>
             <h2>管理员验证</h2>
             <input type="password" id="passwordInput" placeholder="请输入密码" style="width:100%;padding:10px;border-radius:50px;border:2px solid #e2e8f0;margin:16px 0;">
             <button id="btnConfirmPassword" class="btn btn-primary" style="width:100%;">确认</button>
-            <p style="font-size:0.7rem;margin-top:10px;">默认密码：admin888</p>
+            <!-- 移除了默认密码提示 -->
         </div>
     </div>
     <!-- 删除确认弹窗 -->
@@ -236,7 +235,6 @@
             let pendingDeleteId = null;
             let selectedResourceType = 'link';
 
-            // 预设案例
             const presetCases = [
                 { id:'p1', title:'《春》教学课件', subject:'语文', type:'课件', resourceType:'baidu', link:'https://pan.baidu.com/s/example1', description:'部编版七年级语文上册《春》精美课件', isFeatured:true },
                 { id:'p2', title:'古诗鉴赏微课——《静夜思》', subject:'语文', type:'微课', resourceType:'bilibili', link:'https://www.bilibili.com/video/BV1xx', description:'动画解读李白《静夜思》', isFeatured:true },
@@ -343,10 +341,19 @@
             function refreshUI() {
                 renderTabs();
                 renderCases();
-                $('btnAdminToggle').classList.toggle('active', isAdmin);
-                $('btnAdminToggle').textContent = isAdmin ? '⚙️ 管理模式' : '⚙️ 管理';
-                $('btnAddCase').style.display = isAdmin ? '' : 'none';
-                $('btnManageMeta').style.display = isAdmin ? '' : 'none';
+                // 根据管理模式切换body class，控制 admin-only 元素显示
+                if (isAdmin) {
+                    document.body.classList.add('admin-mode');
+                    $('btnAdminToggle').style.display = 'inline-flex';
+                    $('btnAddCase').style.display = 'inline-flex';
+                    $('btnManageMeta').style.display = 'inline-flex';
+                } else {
+                    document.body.classList.remove('admin-mode');
+                    $('btnAdminToggle').style.display = 'none';
+                    $('btnAddCase').style.display = 'none';
+                    $('btnManageMeta').style.display = 'none';
+                }
+                $('btnAdminToggle').textContent = isAdmin ? '⚙️ 退出管理' : '⚙️ 管理';
                 updateAddSelects();
             }
 
@@ -362,13 +369,14 @@
                 setTimeout(() => t.remove(), 2500);
             }
 
-            // 分享视图
+            // 分享视图（不包含 ?admin）
             $('btnShareView').addEventListener('click', () => {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('subject'); url.searchParams.delete('type');
+                url.searchParams.delete('admin'); // 移除管理参数
                 if (currentSubject !== '全部') url.searchParams.set('subject', currentSubject);
                 if (currentType !== '全部') url.searchParams.set('type', currentType);
-                navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 当前筛选链接已复制，可发给客户'));
+                navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 当前筛选链接已复制'));
             });
 
             // 事件绑定
@@ -379,15 +387,32 @@
             $typeTabs.addEventListener('click', e => {
                 if (e.target.classList.contains('filter-tab')) { currentType = e.target.dataset.type; refreshUI(); }
             });
+            // 管理按钮：已登录则退出，未登录则无操作（因为入口已隐藏，仅通过 ?admin 触发密码弹窗）
             $('btnAdminToggle').addEventListener('click', () => {
-                if (isAdmin) { isAdmin = false; sessionStorage.removeItem(SESSION_ADMIN_KEY); refreshUI(); }
-                else { $('passwordModalOverlay').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+                if (isAdmin) {
+                    isAdmin = false;
+                    sessionStorage.removeItem(SESSION_ADMIN_KEY);
+                    refreshUI();
+                    showToast('已退出管理模式');
+                }
             });
             $('btnConfirmPassword').addEventListener('click', () => {
                 if ($('passwordInput').value === ADMIN_PASSWORD) {
-                    isAdmin = true; sessionStorage.setItem(SESSION_ADMIN_KEY, 'true');
-                    $('passwordModalOverlay').style.display = 'none'; refreshUI(); showToast('✅ 已进入管理模式');
-                } else showToast('❌ 密码错误');
+                    isAdmin = true;
+                    sessionStorage.setItem(SESSION_ADMIN_KEY, 'true');
+                    $('passwordModalOverlay').style.display = 'none';
+                    document.body.style.overflow = '';
+                    refreshUI();
+                    showToast('✅ 已进入管理模式');
+                    // 同步更新 URL，移除 ?admin 参数（可选）
+                    if (window.location.search.includes('admin')) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('admin');
+                        window.history.replaceState(null, '', url.toString());
+                    }
+                } else {
+                    showToast('❌ 密码错误');
+                }
             });
             $('btnAddCase').addEventListener('click', () => {
                 updateAddSelects(); $('addModalOverlay').style.display = 'flex'; document.body.style.overflow = 'hidden';
@@ -446,13 +471,33 @@
             });
             $('btnSaveMeta').addEventListener('click', () => { saveData(); $('metaModalOverlay').style.display = 'none'; refreshUI(); });
 
-            // 初始化
-            if (sessionStorage.getItem(SESSION_ADMIN_KEY) === 'true') isAdmin = true;
-            loadData();
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('subject') && appData.subjects.includes(params.get('subject'))) currentSubject = params.get('subject');
-            if (params.get('type') && appData.types.includes(params.get('type'))) currentType = params.get('type');
-            refreshUI();
+            // 页面初始化
+            function init() {
+                loadData();
+                // 检查 URL 中是否有 ?admin 参数 (可带值也可不带)
+                const urlParams = new URLSearchParams(window.location.search);
+                const isAdminParam = urlParams.has('admin');
+                // 如果之前已通过验证，恢复管理模式
+                if (sessionStorage.getItem(SESSION_ADMIN_KEY) === 'true') {
+                    isAdmin = true;
+                }
+                // 如果 URL 里有 ?admin 且当前不是管理员，自动弹出密码弹窗
+                if (isAdminParam && !isAdmin) {
+                    setTimeout(() => {
+                        $('passwordModalOverlay').style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    }, 300);
+                }
+                // 从 URL 恢复筛选条件
+                if (urlParams.get('subject') && appData.subjects.includes(urlParams.get('subject'))) {
+                    currentSubject = urlParams.get('subject');
+                }
+                if (urlParams.get('type') && appData.types.includes(urlParams.get('type'))) {
+                    currentType = urlParams.get('type');
+                }
+                refreshUI();
+            }
+            init();
         })();
     </script>
 </body>
