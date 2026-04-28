@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超越微课设计案例展示</title>
+    <style>
+        :root {
+            --bg: #f4f7fc;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --primary-dark: #3730a3;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07);
+            --shadow-lg: 0 20px 40px -10px rgba(0,0,0,0.12);
+            --radius: 14px;
+            --transition: 0.25s;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(180deg, #f8fafc, #f0f4f8);
+            min-height:100vh;
+            color: var(--text);
+        }
+        .header {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom:1px solid var(--border);
+            padding:16px 0;
+            position:sticky; top:0; z-index:100;
+        }
+        .header-inner {
+            max-width:1300px; margin:0 auto; padding:0 24px;
+            display:flex; align-items:center; justify-content:space-between;
+            flex-wrap:wrap; gap:16px;
+        }
+        .logo-icon {
+            width:46px; height:46px; border-radius:12px;
+            background:linear-gradient(135deg, #4f46e5, #7c3aed);
+            display:flex; align-items:center; justify-content:center;
+            font-size:26px; color:#fff;
+        }
+        .logo-text h1 { font-size:1.3rem; font-weight:700; }
+        .logo-text span { font-size:0.75rem; color:var(--text-secondary); }
+        .btn {
+            padding:8px 18px; border-radius:50px; border:2px solid transparent;
+            cursor:pointer; font-size:0.85rem; font-weight:600;
+            background:#fff; border-color:var(--border); color:var(--text-secondary);
+            transition:var(--transition); white-space:nowrap;
+        }
+        .btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+        .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 4px 12px rgba(79,70,229,0.25); }
+        .btn-primary:hover { background:var(--primary-dark); }
+        .main-container { max-width:1300px; margin:0 auto; padding:24px 24px 60px; }
+        .filter-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .filter-tab {
+            padding:7px 16px; border-radius:50px; border:2px solid transparent;
+            background:#fff; cursor:pointer; font-size:0.85rem; font-weight:500;
+            color:var(--text-secondary); transition:var(--transition);
+            box-shadow:0 1px 2px rgba(0,0,0,0.05);
+        }
+        .filter-tab.active {
+            background:var(--primary); color:#fff; border-color:var(--primary);
+            font-weight:600; box-shadow:0 4px 12px rgba(79,70,229,0.3);
+        }
+        .cases-grid {
+            display:grid; grid-template-columns:repeat(4,1fr); gap:18px;
+        }
+        @media (max-width:1200px) { .cases-grid { grid-template-columns:repeat(3,1fr); } }
+        @media (max-width:860px) { .cases-grid { grid-template-columns:repeat(2,1fr); } }
+        @media (max-width:540px) { .cases-grid { grid-template-columns:1fr 1fr; gap:10px; } }
+        .case-card {
+            background:#fff; border-radius:var(--radius); padding:18px;
+            box-shadow:var(--shadow); transition:var(--transition);
+            cursor:pointer; border:2px solid transparent;
+            display:flex; flex-direction:column; gap:10px;
+            position:relative;
+        }
+        .case-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:#e0e7ff; }
+        .card-badges { display:flex; gap:6px; flex-wrap:wrap; }
+        .badge {
+            font-size:0.7rem; padding:4px 10px; border-radius:50px;
+            font-weight:600; background:#f1f5f9; color:#475569;
+        }
+        .case-card h3 { font-size:1rem; font-weight:600; line-height:1.4; }
+        .card-desc { font-size:0.8rem; color:var(--text-secondary); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
+        .btn-delete-card {
+            width:28px; height:28px; border-radius:50%; border:none;
+            background:#fef2f2; color:#ef4444; cursor:pointer; font-size:0.85rem;
+        }
+        .featured-star { position:absolute; top:12px; right:12px; color:#f59e0b; }
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(15,23,42,0.5);
+            backdrop-filter:blur(4px); z-index:200;
+            display:flex; align-items:center; justify-content:center;
+            padding:20px;
+        }
+        .modal {
+            background:#fff; border-radius:20px; padding:28px;
+            max-width:580px; width:100%; box-shadow:var(--shadow-lg);
+            max-height:85vh; overflow-y:auto; position:relative;
+        }
+        .close-btn {
+            position:absolute; top:14px; right:18px; width:32px; height:32px;
+            border-radius:50%; border:none; background:#f1f5f9; cursor:pointer;
+        }
+        .toast {
+            position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+            background:#1e293b; color:#fff; padding:12px 24px;
+            border-radius:50px; z-index:999; animation: toast 2.5s forwards;
+        }
+        @keyframes toast {
+            0% { opacity:0; transform:translateX(-50%) translateY(20px); }
+            15% { opacity:1; transform:translateX(-50%) translateY(0); }
+            80% { opacity:1; }
+            100% { opacity:0; transform:translateX(-50%) translateY(-10px); }
+        }
+        .share-link-area {
+            display:flex; align-items:center; gap:10px;
+            background:#f8fafc; padding:12px 16px;
+            border-radius:50px; border:1px dashed var(--border);
+            margin-top:12px;
+        }
+        .share-link-area input { background:transparent; border:none; flex:1; outline:none; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="logo-icon">📚</div>
+                <div class="logo-text">
+                    <h1>超越微课设计案例展示</h1>
+                    <span>课件 · 微课 · 教学设计 · 作业设计</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="searchInput" placeholder="搜索..." style="width:180px; padding:8px 16px; border-radius:50px; border:2px solid #e2e8f0; outline:none;" autocomplete="off">
+                <button class="btn" id="btnShareView">🔗 分享当前视图</button>
+                <button class="btn" id="btnAdminToggle">⚙️ 管理</button>
+                <button class="btn btn-primary" id="btnAddCase" style="display:none;">＋ 添加案例</button>
+                <button class="btn" id="btnManageMeta" style="display:none;">📋 管理科目/类型</button>
+            </div>
+        </div>
+    </header>
+    <main class="main-container">
+        <div style="margin-bottom:8px; font-size:0.9rem;">📋 共 <strong id="statTotal">0</strong> 个案例 <span id="statFiltered" style="display:none;">｜ 筛选结果 <strong id="statFilteredCount">0</strong> 个</span></div>
+        <div class="filter-tabs" id="subjectTabs"></div>
+        <div class="filter-tabs" id="typeTabs"></div>
+        <div class="cases-grid" id="casesGrid"></div>
+    </main>
+
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="detailModalOverlay" style="display:none;">
+        <div class="modal"><button class="close-btn" id="btnCloseDetail">✕</button><div id="detailContent"></div></div>
+    </div>
+    <!-- 添加案例弹窗 -->
+    <div class="modal-overlay" id="addModalOverlay" style="display:none;">
+        <div class="modal">
+            <button class="close-btn" id="btnCloseAdd">✕</button>
+            <h2>添加新案例</h2>
+            <form id="addCaseForm">
+                <div style="margin-bottom:12px;"><label>标题 *</label><input type="text" id="addTitle" required style="width:100%; padding:8px; border-radius:8px; border:2px solid #e2e8f0;"></div>
+                <div style="display:flex; gap:12px;">
+                    <div style="flex:1;"><label>科目 *</label><select id="addSubject" required style="width:100%; padding:8px; border-radius:8px; border:2px solid #e2e8f0;"></select></div>
+                    <div style="flex:1;"><label>类型 *</label><select id="addType" required style="width:100%; padding:8px; border-radius:8px; border:2px solid #e2e8f0;"></select></div>
+                </div>
+                <div style="margin-top:12px;">
+                    <label>资源类型</label>
+                    <div id="resourceTypeSelector" style="display:flex; gap:6px;">
+                        <button type="button" class="btn active" data-rtype="link" style="font-size:0.75rem;">🔗 网页链接</button>
+                        <button type="button" class="btn" data-rtype="baidu" style="font-size:0.75rem;">📦 百度网盘</button>
+                        <button type="button" class="btn" data-rtype="bilibili" style="font-size:0.75rem;">🎬 B站视频</button>
+                        <button type="button" class="btn" data-rtype="other" style="font-size:0.75rem;">📁 其他</button>
+                    </div>
+                    <input type="url" id="addLink" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:2px solid #e2e8f0; margin-top:6px;">
+                </div>
+                <div style="margin-top:12px;"><label>描述</label><textarea id="addDesc" rows="2" style="width:100%; padding:8px; border-radius:8px; border:2px solid #e2e8f0;"></textarea></div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:8px;"><input type="checkbox" id="addFeatured"> ⭐ 精选案例</div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:12px;">确认添加</button>
+            </form>
+        </div>
+    </div>
+    <!-- 密码弹窗 -->
+    <div class="modal-overlay" id="passwordModalOverlay" style="display:none;">
+        <div class="modal" style="max-width:400px; text-align:center;">
+            <button class="close-btn" id="btnClosePassword">✕</button>
+            <h2>管理员验证</h2>
+            <input type="password" id="passwordInput" placeholder="请输入密码" style="width:100%;padding:10px;border-radius:50px;border:2px solid #e2e8f0;margin:16px 0;">
+            <button id="btnConfirmPassword" class="btn btn-primary" style="width:100%;">确认</button>
+            <p style="font-size:0.7rem;margin-top:10px;">默认密码：admin888</p>
+        </div>
+    </div>
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="confirmDeleteOverlay" style="display:none;">
+        <div class="modal" style="max-width:400px; text-align:center;">
+            <button class="close-btn" id="btnCloseConfirmDelete">✕</button>
+            <h2>确认删除</h2>
+            <p>确定要删除案例 <strong id="deleteCaseTitle"></strong> 吗？</p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button id="btnConfirmDelete" class="btn btn-primary" style="background:#ef4444; flex:1;">确认删除</button>
+                <button id="btnCancelDelete" class="btn" style="flex:1;">取消</button>
+            </div>
+        </div>
+    </div>
+    <!-- 管理科目/类型弹窗 -->
+    <div class="modal-overlay" id="metaModalOverlay" style="display:none;">
+        <div class="modal">
+            <button class="close-btn" id="btnCloseMeta">✕</button>
+            <h2>管理科目与类型</h2>
+            <div style="display:flex; gap:20px;">
+                <div style="flex:1;"><h3>科目</h3><ul id="subjectList" style="list-style:none;max-height:300px;overflow-y:auto;"></ul><input type="text" id="newSubjectName" placeholder="新科目" style="width:100%; margin-top:8px;"><button id="btnAddSubject" class="btn" style="width:100%;">+ 添加</button></div>
+                <div style="flex:1;"><h3>类型</h3><ul id="typeList" style="list-style:none;max-height:300px;overflow-y:auto;"></ul><input type="text" id="newTypeName" placeholder="新类型" style="width:100%; margin-top:8px;"><button id="btnAddType" class="btn" style="width:100%;">+ 添加</button></div>
+            </div>
+            <button id="btnSaveMeta" class="btn btn-primary" style="width:100%; margin-top:16px;">保存并关闭</button>
+        </div>
+    </div>
+    <div id="toastContainer"></div>
+
+    <script>
+        (function() {
+            const ADMIN_PASSWORD = 'admin888';
+            const STORAGE_KEY = 'ext_teaching_data_v2';
+            const SESSION_ADMIN_KEY = 'is_admin_auth_v2';
+            const DEFAULT_SUBJECTS = ['语文','数学','英语','科学','道德与法治'];
+            const DEFAULT_TYPES = ['课件','微课','教学设计','作业设计'];
+
+            let appData = { subjects: [...DEFAULT_SUBJECTS], types: [...DEFAULT_TYPES], cases: [] };
+            let isAdmin = false;
+            let currentSubject = '全部', currentType = '全部', searchQuery = '';
+            let pendingDeleteId = null;
+            let selectedResourceType = 'link';
+
+            // 预设案例
+            const presetCases = [
+                { id:'p1', title:'《春》教学课件', subject:'语文', type:'课件', resourceType:'baidu', link:'https://pan.baidu.com/s/example1', description:'部编版七年级语文上册《春》精美课件', isFeatured:true },
+                { id:'p2', title:'古诗鉴赏微课——《静夜思》', subject:'语文', type:'微课', resourceType:'bilibili', link:'https://www.bilibili.com/video/BV1xx', description:'动画解读李白《静夜思》', isFeatured:true },
+                { id:'p3', title:'二次函数图像与性质', subject:'数学', type:'课件', resourceType:'link', link:'https://example.com/math课件', description:'动态演示二次函数', isFeatured:false },
+                { id:'p4', title:'现在完成时语法课件', subject:'英语', type:'课件', resourceType:'baidu', link:'https://pan.baidu.com/s/example2', description:'系统讲解现在完成时', isFeatured:false },
+                { id:'p5', title:'力的作用效果课件', subject:'科学', type:'课件', resourceType:'other', link:'https://example.com/physics', description:'实验视频演示', isFeatured:false },
+            ];
+
+            const $ = id => document.getElementById(id);
+            const $casesGrid = $('casesGrid'), $searchInput = $('searchInput');
+            const $subjectTabs = $('subjectTabs'), $typeTabs = $('typeTabs');
+            const $detailModalOverlay = $('detailModalOverlay');
+
+            function loadData() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (parsed && Array.isArray(parsed.subjects) && Array.isArray(parsed.types) && Array.isArray(parsed.cases)) {
+                            appData = parsed;
+                            return;
+                        }
+                    } catch(e) {}
+                }
+                appData = { subjects: [...DEFAULT_SUBJECTS], types: [...DEFAULT_TYPES], cases: [...presetCases] };
+                saveData();
+            }
+            function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+
+            function getFiltered() {
+                return appData.cases.filter(c => {
+                    if (currentSubject !== '全部' && c.subject !== currentSubject) return false;
+                    if (currentType !== '全部' && c.type !== currentType) return false;
+                    if (searchQuery.trim()) {
+                        const q = searchQuery.trim().toLowerCase();
+                        return (c.title?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q) || c.subject?.toLowerCase().includes(q) || c.type?.toLowerCase().includes(q));
+                    }
+                    return true;
+                });
+            }
+
+            function renderTabs() {
+                $subjectTabs.innerHTML = '<button class="filter-tab active" data-subject="全部">全部科目</button>';
+                appData.subjects.forEach(s => $subjectTabs.innerHTML += `<button class="filter-tab" data-subject="${s}">${s}</button>`);
+                $typeTabs.innerHTML = '<button class="filter-tab active" data-type="全部">全部类型</button>';
+                appData.types.forEach(t => $typeTabs.innerHTML += `<button class="filter-tab" data-type="${t}">${t}</button>`);
+                document.querySelectorAll('#subjectTabs .filter-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.subject === currentSubject));
+                document.querySelectorAll('#typeTabs .filter-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.type === currentType));
+            }
+
+            function renderCases() {
+                const filtered = getFiltered();
+                $('statTotal').textContent = appData.cases.length;
+                const showFiltered = (currentSubject !== '全部' || currentType !== '全部' || searchQuery.trim());
+                $('statFiltered').style.display = showFiltered ? '' : 'none';
+                if (showFiltered) $('statFilteredCount').textContent = filtered.length;
+                $casesGrid.innerHTML = '';
+                if (filtered.length === 0) {
+                    $casesGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;">📭 暂无匹配案例</div>';
+                    return;
+                }
+                filtered.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'case-card';
+                    card.innerHTML = `
+                        ${c.isFeatured ? '<span class="featured-star">⭐</span>' : ''}
+                        <div class="card-badges"><span class="badge">${c.subject}</span><span class="badge">${c.type}</span></div>
+                        <h3>${c.title}</h3>
+                        <p class="card-desc">${c.description || ''}</p>
+                        <div class="card-footer">
+                            <span>🔗 查看详情</span>
+                            ${isAdmin ? `<button class="btn-delete-card" data-id="${c.id}">🗑️</button>` : ''}
+                        </div>`;
+                    card.addEventListener('click', e => {
+                        if (e.target.closest('.btn-delete-card')) return;
+                        openDetail(c);
+                    });
+                    $casesGrid.appendChild(card);
+                });
+                if (isAdmin) {
+                    document.querySelectorAll('.btn-delete-card').forEach(btn => {
+                        btn.addEventListener('click', e => {
+                            e.stopPropagation();
+                            pendingDeleteId = btn.dataset.id;
+                            $('deleteCaseTitle').textContent = appData.cases.find(c => c.id === pendingDeleteId)?.title;
+                            $('confirmDeleteOverlay').style.display = 'flex';
+                        });
+                    });
+                }
+            }
+
+            function openDetail(c) {
+                $('detailContent').innerHTML = `
+                    <span class="badge">${c.subject}</span>
+                    <span class="badge">${c.type}</span>
+                    <h2>${c.title}</h2>
+                    <p>${c.description || '暂无描述'}</p>
+                    ${c.link ? `<a href="${c.link}" target="_blank" class="btn btn-primary" style="display:inline-flex;">打开资源链接</a>` : '<p>暂无链接</p>'}
+                `;
+                $detailModalOverlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function refreshUI() {
+                renderTabs();
+                renderCases();
+                $('btnAdminToggle').classList.toggle('active', isAdmin);
+                $('btnAdminToggle').textContent = isAdmin ? '⚙️ 管理模式' : '⚙️ 管理';
+                $('btnAddCase').style.display = isAdmin ? '' : 'none';
+                $('btnManageMeta').style.display = isAdmin ? '' : 'none';
+                updateAddSelects();
+            }
+
+            function updateAddSelects() {
+                const sub = $('addSubject'), typ = $('addType');
+                sub.innerHTML = '<option value="">请选择</option>'; appData.subjects.forEach(s => sub.innerHTML += `<option>${s}</option>`);
+                typ.innerHTML = '<option value="">请选择</option>'; appData.types.forEach(t => typ.innerHTML += `<option>${t}</option>`);
+            }
+
+            function showToast(msg) {
+                const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+                $('toastContainer').appendChild(t);
+                setTimeout(() => t.remove(), 2500);
+            }
+
+            // 分享视图
+            $('btnShareView').addEventListener('click', () => {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('subject'); url.searchParams.delete('type');
+                if (currentSubject !== '全部') url.searchParams.set('subject', currentSubject);
+                if (currentType !== '全部') url.searchParams.set('type', currentType);
+                navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 当前筛选链接已复制，可发给客户'));
+            });
+
+            // 事件绑定
+            $searchInput.addEventListener('input', () => { searchQuery = $searchInput.value; refreshUI(); });
+            $subjectTabs.addEventListener('click', e => {
+                if (e.target.classList.contains('filter-tab')) { currentSubject = e.target.dataset.subject; refreshUI(); }
+            });
+            $typeTabs.addEventListener('click', e => {
+                if (e.target.classList.contains('filter-tab')) { currentType = e.target.dataset.type; refreshUI(); }
+            });
+            $('btnAdminToggle').addEventListener('click', () => {
+                if (isAdmin) { isAdmin = false; sessionStorage.removeItem(SESSION_ADMIN_KEY); refreshUI(); }
+                else { $('passwordModalOverlay').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+            });
+            $('btnConfirmPassword').addEventListener('click', () => {
+                if ($('passwordInput').value === ADMIN_PASSWORD) {
+                    isAdmin = true; sessionStorage.setItem(SESSION_ADMIN_KEY, 'true');
+                    $('passwordModalOverlay').style.display = 'none'; refreshUI(); showToast('✅ 已进入管理模式');
+                } else showToast('❌ 密码错误');
+            });
+            $('btnAddCase').addEventListener('click', () => {
+                updateAddSelects(); $('addModalOverlay').style.display = 'flex'; document.body.style.overflow = 'hidden';
+            });
+            $('addCaseForm').addEventListener('submit', e => {
+                e.preventDefault();
+                const title = $('addTitle').value.trim(), subject = $('addSubject').value, type = $('addType').value;
+                if (!title || !subject || !type) return showToast('⚠️ 请填写必填项');
+                appData.cases.unshift({
+                    id: 'case_' + Date.now(), title, subject, type,
+                    resourceType: selectedResourceType,
+                    link: $('addLink').value.trim(),
+                    description: $('addDesc').value.trim(),
+                    isFeatured: $('addFeatured').checked,
+                });
+                saveData(); $('addModalOverlay').style.display = 'none'; refreshUI(); showToast('✅ 案例已添加');
+            });
+            // 资源类型选择
+            document.getElementById('resourceTypeSelector').addEventListener('click', e => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('#resourceTypeSelector .btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    selectedResourceType = e.target.dataset.rtype;
+                }
+            });
+            // 关闭弹窗
+            document.querySelectorAll('.close-btn').forEach(btn => btn.addEventListener('click', function() {
+                this.closest('.modal-overlay').style.display = 'none'; document.body.style.overflow = '';
+            }));
+            window.addEventListener('click', e => {
+                if (e.target.classList.contains('modal-overlay')) { e.target.style.display = 'none'; document.body.style.overflow = ''; }
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); document.body.style.overflow = ''; } });
+            $('btnConfirmDelete').addEventListener('click', () => {
+                if (pendingDeleteId) { appData.cases = appData.cases.filter(c => c.id !== pendingDeleteId); saveData(); refreshUI(); }
+                $('confirmDeleteOverlay').style.display = 'none';
+            });
+            $('btnCancelDelete').addEventListener('click', () => $('confirmDeleteOverlay').style.display = 'none');
+            // 管理科目/类型
+            function renderMeta() {
+                $('subjectList').innerHTML = appData.subjects.map(s => `<li>${s} <button data-del="${s}" style="margin-left:8px;">🗑️</button></li>`).join('');
+                $('typeList').innerHTML = appData.types.map(t => `<li>${t} <button data-del="${t}" style="margin-left:8px;">🗑️</button></li>`).join('');
+                document.querySelectorAll('#subjectList [data-del]').forEach(b => b.onclick = () => {
+                    appData.subjects = appData.subjects.filter(s => s !== b.dataset.del); renderMeta();
+                });
+                document.querySelectorAll('#typeList [data-del]').forEach(b => b.onclick = () => {
+                    appData.types = appData.types.filter(t => t !== b.dataset.del); renderMeta();
+                });
+            }
+            $('btnManageMeta').addEventListener('click', () => { renderMeta(); $('metaModalOverlay').style.display = 'flex'; });
+            $('btnAddSubject').addEventListener('click', () => {
+                const name = $('newSubjectName').value.trim(); if (name) { appData.subjects.push(name); renderMeta(); $('newSubjectName').value = ''; }
+            });
+            $('btnAddType').addEventListener('click', () => {
+                const name = $('newTypeName').value.trim(); if (name) { appData.types.push(name); renderMeta(); $('newTypeName').value = ''; }
+            });
+            $('btnSaveMeta').addEventListener('click', () => { saveData(); $('metaModalOverlay').style.display = 'none'; refreshUI(); });
+
+            // 初始化
+            if (sessionStorage.getItem(SESSION_ADMIN_KEY) === 'true') isAdmin = true;
+            loadData();
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('subject') && appData.subjects.includes(params.get('subject'))) currentSubject = params.get('subject');
+            if (params.get('type') && appData.types.includes(params.get('type'))) currentType = params.get('type');
+            refreshUI();
+        })();
+    </script>
+</body>
+</html>
