@@ -121,10 +121,82 @@
             80% { opacity:1; }
             100% { opacity:0; transform:translateX(-50%) translateY(-10px); }
         }
-        /* 管理模式下的额外按钮可见 */
         .admin-only { display:none; }
         .admin-mode .admin-only { display:inline-flex; }
         .admin-mode .btn-delete-card { display:inline-flex; }
+
+        /* ---- 新增的宣传与联系方式区域 ---- */
+        .promo-contact {
+            max-width: 1300px;
+            margin: 0 auto 0 auto;
+            padding: 10px 24px 40px;
+        }
+        .promo-section {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        .promo-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        .promo-section .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .promo-images {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .promo-images img {
+            width: 280px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.3s;
+        }
+        .promo-images img:hover {
+            transform: scale(1.03);
+        }
+        .contact-info {
+            background: var(--primary-light);
+            border-radius: var(--radius-sm);
+            padding: 20px 24px;
+            display: inline-block;
+            text-align: left;
+            min-width: 280px;
+        }
+        .contact-info h3 {
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+        }
+        .contact-info p {
+            margin: 6px 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .contact-info .icon {
+            font-size: 1.2rem;
+        }
+        @media (max-width: 640px) {
+            .promo-section {
+                padding: 20px 16px;
+            }
+            .promo-images img {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -140,7 +212,6 @@
             <div style="display:flex; gap:10px; align-items:center;">
                 <input type="text" id="searchInput" placeholder="搜索..." style="width:180px; padding:8px 16px; border-radius:50px; border:2px solid #e2e8f0; outline:none;" autocomplete="off">
                 <button class="btn" id="btnShareView">🔗 分享当前视图</button>
-                <!-- 管理按钮组，默认隐藏，只有验证后显示 -->
                 <button class="btn admin-only" id="btnAdminToggle" style="display:none;">⚙️ 管理模式</button>
                 <button class="btn btn-primary admin-only" id="btnAddCase" style="display:none;">＋ 添加案例</button>
                 <button class="btn admin-only" id="btnManageMeta" style="display:none;">📋 管理科目/类型</button>
@@ -153,6 +224,26 @@
         <div class="filter-tabs" id="typeTabs"></div>
         <div class="cases-grid" id="casesGrid"></div>
     </main>
+
+    <!-- 宣传图片与联系方式区域 -->
+    <div class="promo-contact">
+        <div class="promo-section">
+            <h2>🌟 关于我们</h2>
+            <p class="subtitle">专注微课设计与教学资源开发，助力教师轻松授课</p>
+            <div class="promo-images">
+                <!-- 替换下面的图片文件名为你自己上传的图片名 -->
+                <img src="photo1.jpg" alt="photo1.jpg">
+                <img src="photo2.jpg" alt="photo2.jpg">
+            </div>
+            <div class="contact-info">
+                <h3>📬 联系方式</h3>
+                <p><span class="icon">📱</span> 微信：wksj7175t</p>
+                <p><span class="icon">📞</span> 电话：18567457175</p>
+                <p><span class="icon">📧</span> 邮箱：1712630338@qq.com</p>
+                <p><span class="icon">📍</span> 地址：北京市海淀区中关村大街1号</p>
+            </div>
+        </div>
+    </div>
 
     <!-- 详情弹窗 -->
     <div class="modal-overlay" id="detailModalOverlay" style="display:none;">
@@ -192,7 +283,6 @@
             <h2>管理员验证</h2>
             <input type="password" id="passwordInput" placeholder="请输入密码" style="width:100%;padding:10px;border-radius:50px;border:2px solid #e2e8f0;margin:16px 0;">
             <button id="btnConfirmPassword" class="btn btn-primary" style="width:100%;">确认</button>
-            <!-- 移除了默认密码提示 -->
         </div>
     </div>
     <!-- 删除确认弹窗 -->
@@ -341,7 +431,6 @@
             function refreshUI() {
                 renderTabs();
                 renderCases();
-                // 根据管理模式切换body class，控制 admin-only 元素显示
                 if (isAdmin) {
                     document.body.classList.add('admin-mode');
                     $('btnAdminToggle').style.display = 'inline-flex';
@@ -369,17 +458,15 @@
                 setTimeout(() => t.remove(), 2500);
             }
 
-            // 分享视图（不包含 ?admin）
             $('btnShareView').addEventListener('click', () => {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('subject'); url.searchParams.delete('type');
-                url.searchParams.delete('admin'); // 移除管理参数
+                url.searchParams.delete('admin');
                 if (currentSubject !== '全部') url.searchParams.set('subject', currentSubject);
                 if (currentType !== '全部') url.searchParams.set('type', currentType);
                 navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 当前筛选链接已复制'));
             });
 
-            // 事件绑定
             $searchInput.addEventListener('input', () => { searchQuery = $searchInput.value; refreshUI(); });
             $subjectTabs.addEventListener('click', e => {
                 if (e.target.classList.contains('filter-tab')) { currentSubject = e.target.dataset.subject; refreshUI(); }
@@ -387,7 +474,6 @@
             $typeTabs.addEventListener('click', e => {
                 if (e.target.classList.contains('filter-tab')) { currentType = e.target.dataset.type; refreshUI(); }
             });
-            // 管理按钮：已登录则退出，未登录则无操作（因为入口已隐藏，仅通过 ?admin 触发密码弹窗）
             $('btnAdminToggle').addEventListener('click', () => {
                 if (isAdmin) {
                     isAdmin = false;
@@ -404,7 +490,6 @@
                     document.body.style.overflow = '';
                     refreshUI();
                     showToast('✅ 已进入管理模式');
-                    // 同步更新 URL，移除 ?admin 参数（可选）
                     if (window.location.search.includes('admin')) {
                         const url = new URL(window.location.href);
                         url.searchParams.delete('admin');
@@ -430,7 +515,6 @@
                 });
                 saveData(); $('addModalOverlay').style.display = 'none'; refreshUI(); showToast('✅ 案例已添加');
             });
-            // 资源类型选择
             document.getElementById('resourceTypeSelector').addEventListener('click', e => {
                 if (e.target.tagName === 'BUTTON') {
                     document.querySelectorAll('#resourceTypeSelector .btn').forEach(b => b.classList.remove('active'));
@@ -438,7 +522,6 @@
                     selectedResourceType = e.target.dataset.rtype;
                 }
             });
-            // 关闭弹窗
             document.querySelectorAll('.close-btn').forEach(btn => btn.addEventListener('click', function() {
                 this.closest('.modal-overlay').style.display = 'none'; document.body.style.overflow = '';
             }));
@@ -451,7 +534,6 @@
                 $('confirmDeleteOverlay').style.display = 'none';
             });
             $('btnCancelDelete').addEventListener('click', () => $('confirmDeleteOverlay').style.display = 'none');
-            // 管理科目/类型
             function renderMeta() {
                 $('subjectList').innerHTML = appData.subjects.map(s => `<li>${s} <button data-del="${s}" style="margin-left:8px;">🗑️</button></li>`).join('');
                 $('typeList').innerHTML = appData.types.map(t => `<li>${t} <button data-del="${t}" style="margin-left:8px;">🗑️</button></li>`).join('');
@@ -471,24 +553,19 @@
             });
             $('btnSaveMeta').addEventListener('click', () => { saveData(); $('metaModalOverlay').style.display = 'none'; refreshUI(); });
 
-            // 页面初始化
             function init() {
                 loadData();
-                // 检查 URL 中是否有 ?admin 参数 (可带值也可不带)
                 const urlParams = new URLSearchParams(window.location.search);
                 const isAdminParam = urlParams.has('admin');
-                // 如果之前已通过验证，恢复管理模式
                 if (sessionStorage.getItem(SESSION_ADMIN_KEY) === 'true') {
                     isAdmin = true;
                 }
-                // 如果 URL 里有 ?admin 且当前不是管理员，自动弹出密码弹窗
                 if (isAdminParam && !isAdmin) {
                     setTimeout(() => {
                         $('passwordModalOverlay').style.display = 'flex';
                         document.body.style.overflow = 'hidden';
                     }, 300);
                 }
-                // 从 URL 恢复筛选条件
                 if (urlParams.get('subject') && appData.subjects.includes(urlParams.get('subject'))) {
                     currentSubject = urlParams.get('subject');
                 }
